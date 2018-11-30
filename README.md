@@ -1,5 +1,7 @@
 # LTM
 
+IMPORTANT: This is not an officially supported Google product.
+
 LTM - a object lifetime management library:
 - Helps to transforms C++ into managed programming language.
 - Allows to create arbitrary data models.

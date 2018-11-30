@@ -72,15 +72,15 @@ struct Document : Group {
   LTM_COPYABLE(Document)
 };
 
-own<Document> create() {
+pin<Document> create() {
   Style* s1 = 0;
   SmartConnector* sc = 0;
   TextBlock *t1 = 0, *t2 = 0;
   pin<Document> r = new Document(0, 0,
       {pin<Group>(new Group(10, 10, {
           pin<SmartConnector>::make(10).mark(sc),
-          pin<TextBlock>::make(10, 0, "qwerty").mark(t1),
-          pin<TextBlock>::make(10, 100, "zxcv").mark(t2)}))},
+          pin<TextBlock>::make(10, 0, "A").mark(t1),
+          pin<TextBlock>::make(10, 100, "B").mark(t2)}))},
       {pin<Style>::make("Arial", 44, 12).mark(s1)});
   t2->style = s1;
   sc->start = t1;
