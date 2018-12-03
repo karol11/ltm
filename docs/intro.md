@@ -1,6 +1,10 @@
 # Lifetime management
 ## and the smarter pointers
 
+IMPORTANT: This is not an officially supported Google product.
+
+[TOC]
+
 About two decades ago there was a funny concept stated that any software architecture can be drawn with a handful of diagrams using a Universal Modelling Language (UML).
 There are, among others, a diagram especially designed for data structures. Like this:
 

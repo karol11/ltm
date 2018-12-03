@@ -1,11 +1,7 @@
 # LTM (Object Lifetime Manager)
 
-
 IMPORTANT: This is not an officially supported
 Google product.
-
-
-[TOC]
 
 LTM - a C++ smart-pointer library that:
 - Helps to transforms C++ into managed programming language.
