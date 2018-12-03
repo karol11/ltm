@@ -3,6 +3,7 @@
 
 About two decades ago there was a funny concept stated that any software architecture can be drawn with a handful of diagrams using a Universal Modelling Language (UML).
 There are, among others, a diagram especially designed for data structures. Like this:
+
 ![UML-sample](images/image10.png)
 
 As you can see (or remember) UML diagram uses magic rombs to add ownership flavor to inter-object relationships.
@@ -29,28 +30,34 @@ Most of today's applications use some tree-like data structures.
 #### Publication documents
 
 MS-Word documents have lists of pages and a style sheets:
-![UML-sample](images/image7.png)
+
+![pub-sample](images/image7.png)
+
 Each page has a set of page elements, and the style sheet has a set of named styles.
 
 Page elements can also have sub-elements and so on:
-![UML-sample](images/image18.png)
+
+![pub-expanded-sample](images/image18.png)
 
 Thus the Document data structure has tree-like topology.
 
 #### Graphical User Interfaces
 
 Application graphical user interface consists of forms or windows hosting groups of control elements:
-![UML-sample](images/image12.png)
+
+![gui-sample](images/image12.png)
 
 #### Databases
 
 SQL databases consist of tables, indexes, numerators, procedures and so on. All this data is organized in the tree-shaped hierarchy.
-![UML-sample](images/image3.png)
+
+![db-sample](images/image3.png)
 
 #### Compilers
 
 Compilers operate on abstract syntax tree, though other compiler structures, such as name tables and base blocks also have tree-like structure.
-![UML-sample](images/image2.png)
+
+![ast-sample](images/image2.png)
 
 In all above cases some objects exclusively own a tree of sub-objects.
 
@@ -123,30 +130,31 @@ int main() {
 ```C++
 doc->pages.push_back(doc->pages[0]);
 ```
-![UML-sample](images/image8.png)
+![copy-page](images/image8.png)
 
 #### B. Copy elements from page to page
 ```C++
 doc->pages[1]->elements.push_back(doc->pages[0]->elements[0]);
 ```
-![UML-sample](images/image15.png)
+![copy-item](images/image15.png)
 
 #### C. Delete page and all its content
 ```C++
 doc->pages.erase(doc->pages.begin());
 ```
-![UML-sample](images/image19.png)
+![erase-page](images/image19.png)
 
 #### D. Dispose the old document and create a new one
 ```C++
 doc = new Document;
 ```
-![UML-sample](images/image1.png)
+![new-doc](images/image1.png)
 
 ## Association: when A knows B
 
 Let's look at the Publication document again.
-![UML-sample](images/image11.png)
+
+![link-sample](images/image11.png)
 
 In this example:
 *  Text and paragraph styles reference the named styles from the style sheets.
@@ -161,7 +169,7 @@ Associations are not limited to publication documents. They are everywhere.
 
 #### GUI Forms
 
-![UML-sample](images/image16.png)
+![gui-xrefs](images/image16.png)
 *  Form element often have references to related graphic resources.
 *  Form elements can reference other elements to control their state: focus/unfocus, disable/enable, show/hide etc.
 *  There can be hyperlinks between forms.
@@ -169,7 +177,7 @@ Associations are not limited to publication documents. They are everywhere.
 
 #### Databases
 
-![UML-sample](images/image11.png)
+![db-xrefs](images/image11.png)
 Almost all database entities are linked internally:
 *  Indexes are sorted lists of references to records.
 *  Views, compiled requests, and index metadata hold references tables and field metadata.
@@ -196,6 +204,7 @@ Almost all database entities are linked internally:
 ### Examples of operations:
 
 Assuming we have a diagram document. It contains a grouped visual blocks connected with automatically routed connector lines. It also has some style sheet used by visual elements.
+
 ![UML-sample](images/image17.png)
 
 This document structure defined by both compositions and associations. Smart connectors are visual elements linked with associative pointers (`A` and `B`) to other visual elements, that define its endpoints. And some elements are linked with associative pointers (`C`) to their styles in the style sheet.
