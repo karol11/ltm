@@ -17,6 +17,7 @@ limitations under the License.
 #ifndef _LTM_H_
 #define _LTM_H_
 
+#include <cstdint>
 #include <utility>
 
 namespace ltm {
@@ -50,7 +51,10 @@ class Object {
   }
 
   template <typename VECTOR>
-  static void copy(VECTOR& container, size_t begin, size_t end, size_t dst) {
+  static void copy(VECTOR& container,
+                   std::size_t begin,
+                   std::size_t end,
+                   std::size_t dst) {
     copy_transaction transaction;
     while (begin != end)
       container.insert(container.begin() + dst++, container[begin++]);
@@ -133,7 +137,7 @@ class Object {
 template <typename BASE>
 class Proxy : public BASE {
  protected:
-  void copy_to(Object*& dst) override {
+  void copy_to(Object*&) override {
     assert(false);  // call make_shared or implement copy_to
   }
   Object* get_weak() override {
@@ -478,7 +482,7 @@ class weak {
     if (&src != this) {
       Object* temp = Object::get_weak(src.target);
       Object::release(target);
-      target = src.target;
+      target = temp;
     }
     return *this;
   }
@@ -556,10 +560,10 @@ bool operator!=(const A& a, const B& b) {
 
 template <typename INTERFACE>
 class weak<INTERFACE, false> {
-  template <typename INTERFACE, bool>
+  template <typename INTERFACE1, bool>
   friend class pin;
   weak<Object> impl;
-  ptrdiff_t offset;
+  std::ptrdiff_t offset;
 
  public:
   template <typename IMPL>
