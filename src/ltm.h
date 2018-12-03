@@ -18,6 +18,7 @@ limitations under the License.
 #define _LTM_H_
 
 #include <cstdint>
+#include <cstdlib>
 #include <utility>
 
 namespace ltm {
@@ -138,7 +139,7 @@ template <typename BASE>
 class Proxy : public BASE {
  protected:
   void copy_to(Object*&) override {
-    assert(false);  // call make_shared or implement copy_to
+    abort();  // call make_shared or implement copy_to
   }
   Object* get_weak() override {
     this->counter += Object::COUNTER_STEP;
