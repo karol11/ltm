@@ -55,4 +55,4 @@ void main() {
 }
 ```
 
-More info: (intro)[docs/intro.md]
+More info: [intro](docs/intro.md)
