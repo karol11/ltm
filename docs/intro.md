@@ -1,5 +1,4 @@
-# Lifetime management
-## and the smarter pointers
+# Lifetime Management and Smarter Pointers
 
 IMPORTANT: This is not an officially supported Google product.
 
