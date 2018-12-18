@@ -3,7 +3,7 @@
 IMPORTANT: This is not an officially supported Google product.
 
 LTM - a C++ smart-pointer library that:
-- Helps to transforms C++ into managed programming language.
+- Helps to transform C++ into a managed programming language.
 - Allows to create arbitrary data models.
 - Allows to declaratively express UML abstractions:
     - compositions,
