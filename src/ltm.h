@@ -505,7 +505,7 @@ class weak {
   template <typename BASE,
             typename = typename std::enable_if<
                 std::is_convertible<T*, BASE*>::value>::type>
-  operator weak<BASE>&() noexcept {
+  operator weak<BASE, true>&() noexcept {
     return *reinterpret_cast<weak<BASE>*>(this);
   }
 
