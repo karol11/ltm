@@ -2,8 +2,6 @@
 
 IMPORTANT: This is not an officially supported Google product.
 
-[TOC]
-
 About two decades ago there was a funny concept stated that any software architecture can be drawn with a handful of diagrams using a Universal Modelling Language (UML).
 There are, among others, a diagram especially designed for data structures. Like this:
 
@@ -77,7 +75,7 @@ Operations that can be performed on composition reference (R):
 Creation:
 *  R can be initially unassigned (null).
 *  Destruction:
-   If R is not null, its target should be destroyed. If target contained own composition references,  they should be also destroyed. So cutting of the composition reference is always the destruction of the whole subtree.
+   If R is not null, its target should be destroyed. If target contains own composition references,  they should be also destroyed. So cutting-off the composition reference is always the destruction of the whole subtree.
 *  Assignment of new value (V) to R performed in three steps. 
    1. Make a deep copy of V subtree.
    2. Destroy the old value of R (also all subtree).
@@ -91,8 +89,8 @@ C++ has std::unique_ptr smart pointer implementing appropriate destruction behav
 
 ### Support in LTM library
 
-Composition semantics implemented by `ltm::own<T>` pointer.
-All ltm objects should be descendants of `ltm::Object`. And each non abstract class should define `copy_to` method. LTM has handy macro to declare and define such method `LTM_COPYABLE(ClassName)`.
+Composition semantics is implemented by `ltm::own<T>` pointer.
+All ltm objects should be descendants of `ltm::Object`. And each non abstract class should define `copy_to` method. LTM has handy macro to declare and define such method: `LTM_COPYABLE(ClassName)`.
 Suppose we have a document having pages with text blocks and images.
 
 ```C++
@@ -190,10 +188,10 @@ Almost all database entities are linked internally:
 *  Association is a link between two object that doesn’t assume ownership.
 *  These two objects can belong to different hierarchies and thus references can connect objects from different hierarchies.
 *  References can produce arbitrary graph of connections even having cycles.
-*  Object pointer by associative reference should be owned some other object by composition reference.
+*  Object pointer by associative reference should be owned by some other object with composition reference.
 
 ### Invarians and operations
-*  If object A references object B with association pointer.
+If object A references object B with associative pointer.
 *  A and B have completely independent life times.
 *  If A deleted before B, B becomes unreferenced by A.
 *  If B deleted before A, the pointer becomes Null.
@@ -298,7 +296,7 @@ void main() {
 
 ### Examples
 
-`java.lang.String(s)` are examples of immutable objects, that can be easily and safely referenced from multiple hierarchies. Industry encourages and developers to introduce more and more immutable objects in application design. It is not only safe, it is also, under some limitations, space and time effective, because allows to share objects, eliminating the necessity of allocations and copy operations. GOF has special pattern “Flyweight” utilizing the shared ownership over immutable objects. UML introduces sharing ownership as the Aggregation, a special “many-to-one” relation type, portrayed in diagrams as not filled diamond connection:
+`java.lang.String` is an example of immutable object, that can be easily and safely referenced from multiple hierarchies. Immutable objects are good building blocks for application data structures. They are not only safe but also, under some limitations, are space and time effective, allowing objects sharing, that eliminates the necessity of allocations and copy operations. GOF has special pattern “Flyweight” utilizing the shared ownership over immutable objects. UML introduces sharing ownership as the Aggregation, a special “many-to-one” relation type, portrayed in diagrams as not filled diamond connection:
 
 ![UML-sample](images/image6.png)
 
@@ -311,7 +309,7 @@ void main() {
 ### Although it is not the mandatory property of aggregation, the following rules prevent multiple design flaws:
 *  B should not be mutable. Because reference to it can be passed across subsystems, documents and even application boundaries. And its modification can cause random unpredictable changes of behavior across all computation platform.
 *  There is one special consideration against mutability of B. Even if it is somewhat mutable (owns invisible to clients caches or performs memoizations), it should not contain mutable aggregation pointers to oneself data type. This rule prevents loops in ownership graphs.
-*  Aggregation is strong ownership policy, so even immutable shared objects should utilize weak references in every scenarios not assuming ownership (listeners are always weak references).
+*  Aggregation is a strong ownership policy, so even immutable shared objects should utilize weak references in every scenarios not assuming ownership (listeners/subscribers are always weak references).
 
 ### Support in modern programming languages
 
@@ -319,10 +317,8 @@ All references in modern managed GC-driven languages have aggregation semantic, 
 
 ### Support in LTM
 
-LTM discourage sharing and limits it to the scenarios where it is inavoidable or gives some benefits (like Flyweight pattern).
-Objects have to be designed in a special way to support sharing. For example, it is meaningless to store `java.lang.String` in a single-owner pointer, because of `String` immutable nature.
-
-And otherwise, if a `java.lang.StringBuilder` is stored in a shared-ownership pointers, its mutated state available for read/write from multiple hierarchies will quickly lead application to chaos.
+LTM is wary with shared ownership and limits it to the scenarios where it is inavoidable or gives some benefits (like in Flyweight pattern).
+Objects have to be designed in a special way to support sharing. 
 So some objects are designed to be shared, and others are not. Thus there is only one owning pointer  in LTM - `ltm::own`, and sharing mode is encoded in pointee object.
 
 All immutable objects starts their lifetimes as mutable. At least the object constructor should have the ability to create the object’s internal state, initializing its fields. During these operations object is mutable and thus shouldn’t be shared. That’s why the shared property is connected not to class but to each class instance.
@@ -686,8 +682,7 @@ LTM assumes that object hierarchy created on one thread belongs to this thread a
 Note: Don't pass pointers across threads. Pass objects.
 
 In process of implementation:
-* Adding thread safe `ts_weak<T>`, `ts_pin<T>` that uphold target objects in thread-safe manner, where existing `weak<T>`, `pin<T>`, `own<T>` continue using fast counters and suitable in 99% cases where object is operated from thread it belongs.
-* LTM-aware `thread_pool`, `port`, `task`. That automate object calling across threads. These primitives eliminate the necessity of synchronizations and `ts_weak/ts_pin`.
+* LTM-aware `thread_pool`, `port`, `task`. That automate object calling across threads. These primitives eliminate the necessity of synchronizations and thread safe pointers.
 
 ## Memory leak prevention
 
