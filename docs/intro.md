@@ -324,26 +324,25 @@ So some objects are designed to be shared, and others are not. Thus there is onl
 All immutable objects starts their lifetimes as mutable. At least the object constructor should have the ability to create the object’s internal state, initializing its fields. During these operations object is mutable and thus shouldn’t be shared. That’s why the shared property is connected not to class but to each class instance.
 Each `ltm::Object` is initially mutable and thus performs deep copy on assignments to `ltm::own<T>` pointers. But later - in constructors or as a result of some action on this instance - you can transform it to immutable state. As a part of such transformation you can make it shareable by calling `ltm::Object::make_shared()` protected method. Since this call, the `ltm::own<T>` pointers start sharing this instance on copy operations.
 ```C++
-struct User {
-  own<Name> name;
+struct SharedText : ltm::Object {
   Std::string text;
-  User(own<Name> name) : name(std::move(name)) {}
+  SharedText(std::string text) : text(std::move(text)) { make_shared(); } // {1}
+  LTM_COPYABLE(SharedText)
+}
+struct User {
+  own<SharedText> name;
+  User(own<SharedText> name) : name(name) {}
   LTM_COPYABLE(User)
 };
-struct Name : ltm::Object {
-  Std::string text;
-  Name(std::string text) : text(std::move(text)) { make_shared(); } // {1}
-  LTM_COPYABLE(Name)
-}
-Int main() {
-  own<Name> john = new Name("John");
-  own<User> j_doe = new User(john);
-  own<User> j_smith = new User(john);
+int main() {
+  own<SharedText> johns_name = new SharedText("John");
+  own<User> j_doe = new User(johns_name);
+  own<User> j_smith = new User(johns_name);
 }
 ```
-Now all three pointers ‘john’, ‘j_doe.name’, and ‘j_smith.name’ point to the same Name instance. This made possible because of make_shared call at line {1}.
+Now all three pointers ‘johns_name’, ‘j_doe.name’, and ‘j_smith.name’ point to the same SharedText instance. This made possible because of the `make_shared` call at line {1}.
 
-Sometimes it is desirable to make a distinct copy of a shared object. An own<T>::force_copy() creates a distinct not shared instance, that could be modified (and made shared again if needed).
+Sometimes it is desirable to make a distinct copy of a shared object. The `own<T>::force_copy()` method creates a distinct not shared instance, that could be modified (and made shared again if needed).
 
 ## Pinning
 
