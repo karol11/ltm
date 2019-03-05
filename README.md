@@ -22,7 +22,7 @@ struct Node : Object {
     char c;
     own<Node> left, right;
     Node(char c) :c(c) {}
-    LTM_COPYABLE(node)
+    LTM_COPYABLE(Node)
 };
 int main() {
     auto root = own<Node>::make('a'); // you can also write own<Node> root = new Node('a');
@@ -47,7 +47,7 @@ Let's look at the expanded tree example:
 struct Node : Object {
     char c;
     own<Node> left, right;
-    weak<Node> next; // whatether it means
+    weak<Node> next; // whatever it means
     Node(char c, weak<Node> n) :c(c), n(n) {}
     LTM_COPYABLE(node)
 };
