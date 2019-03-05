@@ -685,8 +685,8 @@ In process of implementation:
 
 ## Memory leak prevention
 
-*  Don’t assign this to own<T> class fields in T constructors (‘this’ here is not_owned and can create loops).
-*  Don’t modify own<T> fields in shared T objects.
+*  Don’t assign `this` to `own<T>` class fields in `T` constructors (because `this` here is not_owned and can create loops).
+*  Don’t modify `own<T>` fields in `shared T` objects.
 *  Don’t use move semantic for object fields between different objects.
 With these three don’ts the LTM guarantees the absence of memory leaks in your application.
 
