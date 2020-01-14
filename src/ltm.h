@@ -1,4 +1,4 @@
-﻿/*
+/*
 Copyright 2018 Google LLC
 
 Licensed under the Apache License, Version 2.0 (the "License");
@@ -27,10 +27,14 @@ class WeakBlock;
 
 template <typename T>
 class own;
-template <typename T, bool = std::is_convertible<T*, Object*>::value>
+template <typename T>
 class weak;
-template <typename T, bool = std::is_convertible<T*, Object*>::value>
+template <typename T>
 class pin;
+template <typename T>
+class iweak;
+template <typename T>
+class ipin;
 
 class Object {
   friend class WeakBlock;
@@ -38,10 +42,14 @@ class Object {
   friend class Proxy;
   template <typename T>
   friend class own;
-  template <typename T, bool>
+  template <typename T>
   friend class weak;
-  template <typename T, bool>
+  template <typename T>
   friend class pin;
+  template <typename T>
+  friend class iweak;
+  template <typename T>
+  friend class ipin;
 
  public:
   template <typename FROM, typename TO>
@@ -153,10 +161,14 @@ class WeakBlock : public Object {
   friend struct Object::copy_transaction;
   template <typename T>
   friend class own;
-  template <typename T, bool>
+  template <typename T>
   friend class weak;
-  template <typename T, bool>
+  template <typename T>
   friend class pin;
+  template <typename T>
+  friend class iweak;
+  template <typename T>
+  friend class ipin;
 
   Object* target;
   intptr_t org_counter;
@@ -172,10 +184,14 @@ class WeakBlock : public Object {
 // Owning pointer
 template <typename T>
 class own {
-  template <typename U, bool>
+  template <typename U>
   friend class pin;
-  template <typename U, bool>
+  template <typename U>
   friend class weak;
+  template <typename U>
+  friend class ipin;
+  template <typename U>
+  friend class iweak;
 
   mutable Object* target;
 
@@ -194,6 +210,7 @@ class own {
 
   ~own() noexcept { Object::release(target); }
   T* operator->() const noexcept { return static_cast<T*>(target); }
+  T& operator*() const noexcept { return *static_cast<T*>(target); }
   operator bool() const noexcept { return target != nullptr; }
   operator void*() const noexcept { return target; }
 
@@ -288,12 +305,14 @@ class own {
 };
 
 // Temporay pointer
-template <typename T, bool>
+template <typename T>
 class pin {
   template <typename U>
   friend class own;
-  template <typename U, bool>
+  template <typename U>
   friend class weak;
+  template <typename U>
+  friend class iweak;
 
   mutable Object* target;
 
@@ -316,7 +335,9 @@ class pin {
   T* operator->() const noexcept { return static_cast<T*>(target); }
   operator bool() const noexcept { return target != nullptr; }
   operator void*() const noexcept { return target; }
+  T& operator*() const noexcept { return *static_cast<T*>(target); }
   ~pin() noexcept { Object::release(target); }
+  bool has_weak() { return target && (target->counter & Object::WEAKLESS) == 0; }
 
   template <typename BASE,
             typename = typename std::enable_if<
@@ -371,11 +392,25 @@ class pin {
     return *reinterpret_cast<pin<SUB>*>(this);
   }
 
+  template <typename SUB,
+            typename = typename std::enable_if<
+                std::is_convertible<SUB*, T*>::value>::type>
+  const pin<SUB>& cast() const noexcept {
+    return *reinterpret_cast<const pin<SUB>*>(this);
+  }
+
   template <typename SUB = T,
             typename = typename std::enable_if<
                 std::is_convertible<SUB*, T*>::value>::type>
   SUB* get() noexcept {
     return static_cast<SUB*>(target);
+  }
+
+  template <typename SUB = T,
+            typename = typename std::enable_if<
+                std::is_convertible<SUB*, T*>::value>::type>
+  const SUB* get() const noexcept {
+    return static_cast<const SUB*>(target);
   }
 
   template <typename C = T,
@@ -425,12 +460,14 @@ class pin {
 };
 
 // Weak pointer
-template <typename T, bool>
+template <typename T>
 class weak {
   template <typename U>
   friend class own;
-  template <typename U, bool>
+  template <typename U>
   friend class pin;
+  template <typename U>
+  friend class ipin;
 
   mutable Object* target;
 
@@ -505,7 +542,7 @@ class weak {
   template <typename BASE,
             typename = typename std::enable_if<
                 std::is_convertible<T*, BASE*>::value>::type>
-  operator weak<BASE, true>&() noexcept {
+  operator weak<BASE>&() noexcept {
     return *reinterpret_cast<weak<BASE>*>(this);
   }
 
@@ -560,30 +597,38 @@ bool operator!=(const A& a, const B& b) {
 }
 
 template <typename INTERFACE>
-class weak<INTERFACE, false> {
-  template <typename INTERFACE1, bool>
-  friend class pin;
+class iweak {
+  template <typename INTERFACE1>
+  friend class ipin;
+
   weak<Object> impl;
   std::ptrdiff_t offset;
 
  public:
   template <typename IMPL>
-  weak(weak<IMPL> impl) : impl(std::move(impl)) {
+  iweak(iweak<IMPL> impl) : impl(std::move(impl)) {
     auto a = reinterpret_cast<IMPL*>(this);
     auto b = static_cast<INTERFACE*>(a);
     offset = reinterpret_cast<char*>(b) - reinterpret_cast<char*>(a);
   }
 
-  pin<INTERFACE> pinned() { return pin<INTERFACE>(*this); }
+  template <typename IMPL>
+  iweak(weak<IMPL> impl) : impl(std::move(impl)) {
+    auto a = reinterpret_cast<IMPL*>(this);
+    auto b = static_cast<INTERFACE*>(a);
+    offset = reinterpret_cast<char*>(b) - reinterpret_cast<char*>(a);
+  }
+
+  ipin<INTERFACE> pinned() { return ipin<INTERFACE>(*this); }
 };
 
 template <typename INTERFACE>
-class pin<INTERFACE, false> {
+class ipin {
   pin<Object> holder;
   INTERFACE* impl;
 
  public:
-  pin(const weak<INTERFACE>& weak)
+  ipin(const iweak<INTERFACE>& weak)
       : holder(weak.impl),
         impl(reinterpret_cast<INTERFACE*>(
             reinterpret_cast<char*>(holder.operator->()) + weak.offset)) {}
@@ -597,9 +642,38 @@ void mc(C& container, std::initializer_list<T> v) {
   for (auto& i : v)
     container.push_back(i);
 }
+
 }  // namespace ltm
 
+namespace std {
+template <typename T>
+struct hash<ltm::weak<T>> {
+  typedef ltm::weak<T> argument_type;
+  typedef std::size_t result_type;
+  result_type operator()(argument_type const& val) const noexcept {
+    return std::hash<void*>{}(val);
+  }
+};
+template <typename T>
+struct hash<ltm::own<T>> {
+  typedef ltm::own<T> argument_type;
+  typedef std::size_t result_type;
+  result_type operator()(argument_type const& val) const noexcept {
+    return std::hash<void*>{}(val);
+  }
+};
+template <typename T>
+struct hash<ltm::pin<T>> {
+  typedef ltm::pin<T> argument_type;
+  typedef std::size_t result_type;
+  result_type operator()(argument_type const& val) const noexcept {
+    return std::hash<void*>{}(val);
+  }
+};
+
+}  // namespace std
+
 #define LTM_COPYABLE(CLASS) \
-  void copy_to(Object*& d) { d = new CLASS(*this); }
+  void copy_to(Object*& d) override { d = new CLASS(*this); }
 
 #endif  // E_LTM_H_
