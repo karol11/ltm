@@ -1,4 +1,4 @@
-﻿/*
+/*
 Copyright 2018 Google LLC
 
 Licensed under the Apache License, Version 2.0 (the "License");
@@ -21,8 +21,7 @@ limitations under the License.
 #endif  // TESTS
 
 namespace ltm {
-// Object *copy_head = nullptr;
-// uintptr_t copy_depth = 0;
+
 namespace {
 thread_local Object* copy_head = nullptr;
 thread_local uintptr_t copy_depth = 0;
