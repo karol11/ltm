@@ -606,13 +606,6 @@ class iweak {
 
  public:
   template <typename IMPL>
-  iweak(iweak<IMPL> impl) : impl(std::move(impl)) {
-    auto a = reinterpret_cast<IMPL*>(this);
-    auto b = static_cast<INTERFACE*>(a);
-    offset = reinterpret_cast<char*>(b) - reinterpret_cast<char*>(a);
-  }
-
-  template <typename IMPL>
   iweak(weak<IMPL> impl) : impl(std::move(impl)) {
     auto a = reinterpret_cast<IMPL*>(this);
     auto b = static_cast<INTERFACE*>(a);
