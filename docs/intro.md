@@ -7,7 +7,7 @@ There are, among others, a diagram especially designed for data structures. Like
 
 ![UML-sample](images/image10.png)
 
-As you can see (or remember) UML diagram uses magic rombs to add ownership flavor to inter-object relationships.
+As you can see (or remember) UML diagram uses magic rombs to add some ownership flavor to inter-object relationships.
 
 There are three main types of ownership :
 *  Composition. A owns B
@@ -85,7 +85,7 @@ The sequence of operations matters because V can be somewhere in the original va
 ### Support in modern programming languages
 
 All gc-driven languages (java,  c#, python, go-lang, js - name yours favorite), don't support it. Software developer supposed to write code for all copy and destruction operations manually. The best suggestion I saw for making copy is: “Serialize your structures to a memory stream and deserialize them back”. Very funny. And this doesn’t distinguish composition (owning) pointers from aggregation (shared) and from many entangled cases involving non-owning pointers. 
-C++ has std::unique_ptr smart pointer implementing appropriate destruction behavior. But copy operations internationally left unimplemented and disabled. Other standard smart pointers don’t support aggregation at all.
+C++ has std::unique_ptr smart pointer implementing appropriate destruction behavior. But copy operations had been intentionally left unimplemented and disabled. Other standard smart pointers don’t support aggregation at all.
 
 ### Support in LTM library
 
@@ -185,10 +185,11 @@ Almost all database entities are linked internally:
 *  Foreign Keys with cascade delete can also be implemented with collections of references to records.
 
 ### Common ideas about Associations
-*  Association is a link between two object that doesn’t assume ownership.
+*  Association is a link between two object.
+*  Association does not assume ownership.
 *  These two objects can belong to different hierarchies and thus references can connect objects from different hierarchies.
 *  References can produce arbitrary graph of connections even having cycles.
-*  Object pointer by associative reference should be owned by some other object with composition reference.
+*  Object pointed by an associative reference should be owned by some other object with composition reference.
 
 ### Invarians and operations
 If object A references object B with associative pointer.
@@ -410,8 +411,9 @@ Automatic upcasting to base types
 ```C++
 own<TextBlock> block = new TextBlock(1, 1, 100, 100, "Text");
 pin<PageElement> element = block;
-
+```
 Manual static_cast base-to-descendants:
+```C++
 own<PageElement> block = new TextBlock(1, 1, 100, 100, "Text");
 pin<TextBlock> element = block.cast<TextBlock>();
 // or
@@ -626,18 +628,18 @@ Now we can operate it as Interface implementation:
 ```C++
 void interaface_test() {
   auto c = own<Impl>::make(42); // {1}
-  weak<Interface> w = c.weaked(); // {2}
+  iweak<Interface> w = c.weaked(); // {2}
   if (auto i = w.pinned()) // {3}
     i->method2(11);
 }
 ```
 Steps are:
 *  Create the Impl instance {1}
-*  Acquire a weak pointer to its Interface implementation {2}
+*  Acquire an i-weak pointer to its Interface implementation {2}
 *  Lock it {3}
 *  Call interface methods.
 
-The specialized `ltm::weak<T>` pointer acts the same way as ordinary `ltm::weak`.
+The special `ltm::iweak<T>` pointer acts the same way as ordinary `ltm::weak`.
 *  Its copy operation is topology-aware,
 *  It turned to nullptr on object destruction.
 
@@ -660,7 +662,7 @@ Then we copy two objects in single operation, it is not the same as when we make
 Ltm has special `ltm::copy` function that can accept an iterator range and an inserter to copy all range as one operation. The common usage is:
 1.  Create a container or `initializer_list` of `pin<T>` of objects that need to be copied, and an output container of `pin<T>`.
 2.  Call `ltm::Object::copy`
-3.  After the `copy` operation assign all resulting `pin<T>` to `own<T>` at desired locations.
+3.  After the `copy` operation ends, assign all resulting `pin<T>` to `own<T>` at desired locations.
 
 If source and destinations are already iterable containers of `pin<T>` or `own<T>` they can be used directly.
 
@@ -669,14 +671,14 @@ There is a separate overload of ltm::copy that accepts (vector, start_index, end
 ## Move semantics
 
 It’s supported.
-It’s mostly usable for operations over `std::vector` items. Don’t rely on it too much, because C++ allows compiler to silently ignore move even  on `std::move`, for example on `initializer_lists` returning `const T&`.
+It’s mostly usable for operations over `std::vector` items. Don’t rely on it too much, because C++ allows compiler to silently ignore `std::move`, for example on `initializer_lists` returning `const T&`.
 And don’t abuse it because when you’re moving composition pointers from one object to another, you should precisely check if you aren’t creating loops in the composition graph. It’d be better to completely avoid `std::move` over ltm pointers.
 
 ## Multithreading
 
 LTM don’t share global state. Thus ltm is thread-aware, but it is not thread-safe.
-All copy, construction, and dispose operations on ltm pointers are safe as long as all objects belong to single thread.
-LTM assumes that object hierarchy created on one thread belongs to this thread and processed in single-thread manner. Application code could pass the whole object tree or its detached subtrees to another thread using some request/response queues. This action transfers ownership over original hierarchy from thread to queue and from queue to new thread. Objects passed to another thread should form an enclosed domain by all its pointers (including the shared ones).
+All copy, construction, and dispose operations on ltm pointers are safe as long as all affected objects belong to the single thread.
+LTM assumes that object hierarchy created on one thread belongs to this thread and is processed in a single-thread manner. Application code could pass the whole object tree or its detached subtrees to another thread using some request/response queues. This action transfers ownership over the original hierarchy from thread to queue and from queue to a new thread. Objects passed to another thread should form an enclosed domain by all its pointers (including the shared ones).
 
 Note: Don't pass pointers across threads. Pass objects.
 
@@ -697,7 +699,7 @@ Even without this limitations just usage of own/weak/pin pointers gives the same
 ### Memory:
 *  ltm::Object has one void* field. It stores own/pin counter, flags and/or pointer to the weak blocks that tracks weak pointer behaviour.
 *  ltm::pin, ltm::weak, and ltm::own - are all of the size of one void*.
-*  specialized ltm::weak and ltm::pin pointing to non-ltm::Object types have the size of two pointers: one references the retained/tracked ltm::object and another points to the interface implementation.
+*  special ltm::iweak and ltm::ipin pointing to non-ltm::Object types have the size of two pointers: one references the retained/tracked ltm::object and another points to the interface implementation.
 *  ltm::Objects referenced by weak pointers have additional ltm:WeakBlock structure that stores three pointer-sized fields (so since it has vmt, it occupies four mashine words). This structure stores lock counters for pin/weak/shared pointers and a pointer to the target object.
 *  Construction/destruction/pinning/unpinning/copy operations do not allocate additional overhead memory.
 
